@@ -9,3 +9,4 @@ scipy
 came-pytorch
 wheel
 lycoris-lora
+bitsandbytes==0.45.5
