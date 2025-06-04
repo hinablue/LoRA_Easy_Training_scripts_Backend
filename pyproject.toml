@@ -56,6 +56,6 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-loraeasycustomoptimizer = { path = "custom_scheduler" }
-library = { git = "https://github.com/67372a/sd-scripts" }
+library = { path = "sd_scripts" }
 lycoris-lora = { path = "lycoris" }
+loraeasycustomoptimizer = { path = "custom_scheduler" }

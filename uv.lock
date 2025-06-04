@@ -1083,7 +1083,7 @@ wheels = [
 [[package]]
 name = "library"
 version = "0.0.0"
-source = { git = "https://github.com/67372a/sd-scripts#bc43ac2801d06515268cbea78cb06dd8a62684d0" }
+source = { directory = "sd_scripts" }
 
 [[package]]
 name = "lightning-utilities"
@@ -1183,7 +1183,7 @@ requires-dist = [
     { name = "huggingface-hub", extras = ["hf-xet"], specifier = "==0.27.1" },
     { name = "imagesize", specifier = "==1.4.1" },
     { name = "kornia", specifier = "==0.8.1" },
-    { name = "library", git = "https://github.com/67372a/sd-scripts" },
+    { name = "library", directory = "sd_scripts" },
     { name = "lion-pytorch", specifier = "==0.2.3" },
     { name = "loraeasycustomoptimizer", directory = "custom_scheduler" },
     { name = "lycoris-lora", directory = "lycoris" },
@@ -1225,7 +1225,7 @@ source = { directory = "custom_scheduler" }
 
 [[package]]
 name = "lycoris-lora"
-version = "3.1.1.post1"
+version = "3.2.0.post2"
 source = { directory = "lycoris" }
 dependencies = [
     { name = "einops" },
