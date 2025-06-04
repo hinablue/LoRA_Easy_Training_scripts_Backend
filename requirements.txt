@@ -7,5 +7,6 @@ pyngrok
 pycloudflared
 scipy
 came-pytorch
-pytorch_optimizer==3.1.2
 wheel
+lycoris-lora
+bitsandbytes==0.45.5

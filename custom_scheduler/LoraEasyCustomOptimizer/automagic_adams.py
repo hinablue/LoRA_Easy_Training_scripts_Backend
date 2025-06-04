@@ -126,7 +126,6 @@ class Automagic_AdamS(torch.optim.Optimizer):
                     state['step'] = 0
                 state["step"] += 1
                 self._step = state["step"] + 1
-
                 # === grad 初始化 ===
                 grad = p.grad
 
@@ -136,7 +135,6 @@ class Automagic_AdamS(torch.optim.Optimizer):
                 abs_grad = torch.abs(grad)
                 agr = abs_grad / sum_abs_all_group_grads
                 grad = grad * (1 - agr)
-
                 beta1, beta2, beta3 = group["betas"]
                 eps = group["eps"]
                 alpha = (1 - beta1) / (1 - beta3)

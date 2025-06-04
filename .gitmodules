@@ -1,7 +1,6 @@
 [submodule "sd_scripts"]
 	path = sd_scripts
-	url = https://github.com/kohya-ss/sd-scripts
+	url = https://github.com/67372a/sd-scripts.git
 [submodule "LyCORIS"]
 	path = lycoris
-	url = https://github.com/67372a/LyCORIS
-
+	url = https://github.com/67372a/LyCORIS.git
