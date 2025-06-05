@@ -51,26 +51,31 @@ ARG TARGETVARIANT
 
 WORKDIR /app
 
-# Install uv
+# Install uv - the modern Python package manager
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+# Configure uv environment
 ENV UV_PROJECT_ENVIRONMENT=/venv
 ENV VIRTUAL_ENV=/venv
 ENV UV_LINK_MODE=copy
 ENV UV_PYTHON_DOWNLOADS=0
 ENV UV_INDEX=https://download.pytorch.org/whl/cu128
 
-# Install build dependencies
+# Install system build dependencies
 RUN --mount=type=cache,id=apt-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/var/cache/apt \
     --mount=type=cache,id=aptlists-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/var/lib/apt/lists \
     apt-get update && apt-get upgrade -y && \
-    apt-get install -y --no-install-recommends python3-launchpadlib git curl
+    apt-get install -y --no-install-recommends \
+    python3-launchpadlib \
+    git \
+    curl
 
 # Install big dependencies separately for layer caching
 # !Please note that the version restrictions should be the same as pyproject.toml
 # No packages listed should be removed in the next `uv sync` command
 # If this happens, please update the version restrictions or update the uv.lock file
 RUN --mount=type=cache,id=uv-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/root/.cache/uv \
+    # Create virtual environment
     uv venv --system-site-packages /venv && \
     uv pip install --no-deps \
     # torch (1.0GiB)
@@ -91,7 +96,7 @@ RUN --mount=type=cache,id=uv-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/ro
     --mount=type=bind,source=lycoris,target=lycoris,rw \
     uv sync --frozen --no-dev --no-install-project --no-editable
 
-# Replace pillow with pillow-simd (Only for x86)
+# Replace pillow with pillow-simd for better performance on x86
 ARG TARGETPLATFORM
 RUN --mount=type=cache,id=apt-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/var/cache/apt \
     --mount=type=cache,id=aptlists-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/var/lib/apt/lists \
@@ -108,65 +113,78 @@ FROM base AS final
 
 ARG TARGETARCH
 ARG TARGETVARIANT
+ARG UID
 
 WORKDIR /tmp
 
 # Install runtime dependencies
-ARG UID
 RUN --mount=type=cache,id=apt-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/var/cache/apt \
     --mount=type=cache,id=aptlists-$TARGETARCH$TARGETVARIANT,sharing=locked,target=/var/lib/apt/lists \
     apt-get update && \
-    apt-get install -y --no-install-recommends libgl1 libglib2.0-0 libjpeg62 libtcl8.6 libtk8.6 libgoogle-perftools-dev dumb-init git vim sudo curl wget && \
+    apt-get install -y --no-install-recommends \
+    libgl1 \
+    libglib2.0-0 \
+    libjpeg62 \
+    libtcl8.6 \
+    libtk8.6 \
+    libgoogle-perftools-dev \
+    dumb-init \
+    git \
+    vim \
+    sudo \
+    curl \
+    wget \
+    htop \
+    tree && \
     echo $UID ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$UID && \
     chmod 0440 /etc/sudoers.d/$UID && \
     apt-get autoremove -y && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 
-# Fix missing libnvinfer7
+# Fix missing libnvinfer libraries
 RUN ln -s /usr/lib/x86_64-linux-gnu/libnvinfer.so /usr/lib/x86_64-linux-gnu/libnvinfer.so.7 && \
     ln -s /usr/lib/x86_64-linux-gnu/libnvinfer_plugin.so /usr/lib/x86_64-linux-gnu/libnvinfer_plugin.so.7
 
-# Create user
-ARG UID
+# Create user and directories
 RUN groupadd -g $UID $UID && \
-    useradd -l -u $UID -g $UID -m -s /bin/sh -N $UID
+    useradd -l -u $UID -g $UID -m -s /bin/zsh -N $UID
 
 # Create directories with correct permissions
 RUN install -d -m 775 -o $UID -g 0 /dataset && \
-    install -d -m 775 -o $UID -g 0 /licenses && \
+    install -d -m 775 -o $UID -g 0 /workspace && \
     install -d -m 775 -o $UID -g 0 /app && \
     install -d -m 775 -o $UID -g 0 /venv
 
-# Copy licenses (OpenShift Policy)
-# COPY --link --chmod=775 LICENSE.md /licenses/LICENSE.md
-
-# Copy dependencies and code (and support arbitrary uid for OpenShift best practice)
+# Copy the virtual environment and application code
 COPY --link --chown=$UID:0 --chmod=775 --from=build /venv /venv
 COPY --link --chown=$UID:0 --chmod=775 . /app
 
-ENV PATH="/usr/local/cuda/lib:/usr/local/cuda/lib64:/home/$UID/.local/bin:$PATH"
-ENV PYTHONPATH="/venv/lib/python3.11/site-packages"
-
+# Environment configuration
+ENV PATH="/usr/local/cuda/lib:/usr/local/cuda/lib64:/home/$UID/.local/bin:/venv/bin:$PATH"
+ENV PYTHONPATH="/venv/lib/python3.11/site-packages:/app"
 ENV LD_LIBRARY_PATH="/venv/lib/python3.11/site-packages/nvidia/cudnn/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
 ENV LD_PRELOAD=libtcmalloc.so
 ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
-# Rich logging
-# https://rich.readthedocs.io/en/stable/console.html#interactive-mode
+# Rich terminal configuration
 ENV FORCE_COLOR="true"
 ENV COLUMNS="100"
+ENV TERM=xterm-256color
 
 WORKDIR /app
 
-VOLUME [ "/dataset" ]
+# Volumes for data and workspace
+VOLUME [ "/dataset", "/workspace" ]
 
+# Expose application port
 EXPOSE 8000
 
+# Switch to non-root user
 USER $UID
 
+# Install oh-my-zsh for better terminal experience
 RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v1.2.1/zsh-in-docker.sh)" -- \
-    -a 'CASE_SENSITIVE="true"' \
     -t https://github.com/denysdovhan/spaceship-prompt \
     -a 'SPACESHIP_PROMPT_ADD_NEWLINE="false"' \
     -a 'SPACESHIP_PROMPT_SEPARATE_LINE="false"' \
@@ -175,9 +193,25 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
     -p https://github.com/zsh-users/zsh-autosuggestions \
     -p https://github.com/zsh-users/zsh-completions
 
+# Signal handling
 STOPSIGNAL SIGINT
 
 # Use dumb-init as PID 1 to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-CMD python3 main.py
+# Default command
+CMD ["python3", "main.py"]
+
+ARG VERSION
+ARG RELEASE
+LABEL name="hinablue/lora-easy-training-scripts-backend" \
+    vendor="hinablue" \
+    maintainer="hinablue" \
+    # Dockerfile source repository
+    url="https://github.com/hinablue/lora-easy-training-scripts-backend" \
+    version=${VERSION} \
+    # This should be a number, incremented with each change
+    release=${RELEASE} \
+    io.k8s.display-name="lora-easy-training-scripts-backend" \
+    summary="LoRA Easy Training Scripts Backend" \
+    description="LoRA Easy Training Scripts Backend"

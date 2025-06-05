@@ -1,61 +1,106 @@
 [project]
 name = "lora-easy-training-scripts-backend"
 version = "0.1.0"
-description = "Lora Easy Training Script Backend"
+description = "LoRA Easy Training Scripts Backend"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
+authors = [
+    { name = "LoRA Easy Training Scripts Team" }
+]
+license = "Apache-2.0"
+
 dependencies = [
-    "accelerate==1.2.1",
-    "altair==5.5.0",
-    "bitsandbytes==0.45.5",
-    "came-pytorch==0.1.3",
-    "cmake==4.0.2",
-    "dadaptation==3.2",
-    "diffusers==0.32.1",
-    "easygui==0.98.3",
-    "einops==0.8.0",
-    "ftfy==6.3.1",
-    "hf-xet==1.1.2",
-    "hpsv2==1.2.0",
-    "huggingface-hub[hf-xet]==0.27.1",
-    "imagesize==1.4.1",
-    "kornia==0.8.1",
-    "library",
-    "lion-pytorch==0.2.3",
-    "loraeasycustomoptimizer",
-    "lycoris-lora>=3.2.0.post2",
-    "matplotlib==3.10.1",
-    "narwhals==1.34.1",
-    "ninja==1.11.1.4",
-    "opencv-python==4.10.0.84",
-    "prodigy-plus-schedule-free==1.9.2",
-    "prodigyopt==1.1.1",
-    "pycloudflared>=0.2.0",
-    "pyngrok>=7.2.9",
-    "pytorch-lightning==2.5.0.post0",
-    "pytorch-optimizer==3.5.1",
-    "pywavelets==1.8.0",
-    "requests>=2.32.3",
-    "rich==14.0.0",
-    "safetensors==0.5.3",
-    "schedulefree==1.4",
-    "scipy==1.15.2",
-    "sentencepiece==0.2.0",
-    "setuptools==80.9.0",
-    "starlette>=0.47.0",
-    "tensorboard==2.19.0",
-    "toml==0.10.2",
-    "transformers==4.48.0",
-    "triton==3.3.0 ; sys_platform == 'linux'",
-    "triton-windows==3.3.1.post19 ; sys_platform == 'win32'",
-    "uvicorn[standard]>=0.34.3",
-    "voluptuous==0.15.2",
-    "wandb==0.19.11",
-    "wheel==0.45.1",
-    "xformers==0.0.30",
+    # Core web framework
+    "starlette",
+    "uvicorn[standard]",
+    "requests",
+
+    # ML/Training core dependencies
+    "torch>=2.7.0",
+    "triton>=3.1.0",
+    "accelerate>=1.2.0",
+    "diffusers>=0.32.0",
+    "transformers>=4.48.0",
+    "safetensors>=0.5.0",
+    "huggingface-hub>=0.27.0",
+
+    # Optimizers and schedulers
+    "dadaptation",
+    "came-pytorch",
+    "prodigyopt",
+    "lion-pytorch",
+    "schedulefree",
+    "pytorch-optimizer",
+
+    # Scientific computing
+    "scipy",
+    "numpy",
+    "matplotlib",
+    "opencv-python",
+    "einops",
+    "kornia",
+    "pywavelets",
+
+    # ML utilities
+    "wandb",
+    "tensorboard",
+    "rich",
+    "toml",
+    "voluptuous",
+    "sentencepiece",
+    "ftfy",
+    "imagesize",
+
+    # Platform-specific dependencies
+    "bitsandbytes>=0.45.0",
+    "xformers>=0.0.30",
+
+    # Networking and tunneling
+    "pyngrok",
+    "pycloudflared",
+
+    # Build tools
+    "wheel",
+    "setuptools",
+    "cmake",
+    "ninja",
+
+    # Additional ML libraries
+    "easygui",
+    "hf-xet",
+    "hpsv2",
+    "narwhals",
+    "pytorch-lightning",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*"]
+exclude = ["installables*", "utils*", "scripts*", "dist*"]
+
 [tool.uv.sources]
-library = { path = "sd_scripts" }
-lycoris-lora = { path = "lycoris" }
-loraeasycustomoptimizer = { path = "custom_scheduler" }
+library = { path = "sd_scripts", editable = true }
+lycoris-lora = { path = "lycoris", editable = true }
+LoraEasyCustomOptimizer = { path = "custom_scheduler", editable = true }
+
+
+[tool.black]
+line-length = 100
+target-version = ['py311', 'py312']
+
+[tool.isort]
+profile = "black"
+line_length = 100

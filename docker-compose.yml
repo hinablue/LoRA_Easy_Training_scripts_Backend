@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  lora-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        UID: ${UID:-1000}
+        VERSION: latest
+    image: lora-easy-training-backend:latest
+    container_name: lora-backend
+    restart: unless-stopped
+
+    # GPU support
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+    # Environment variables
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - CUDA_VISIBLE_DEVICES=0
+      - WANDB_API_KEY=${WANDB_API_KEY:-}
+      - NGROK_AUTH_TOKEN=${NGROK_AUTH_TOKEN:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+
+    # Ports
+    ports:
+      - "8000:8000"
+      - "6006:6006"  # TensorBoard
+      - "4040:4040"  # NgRok
+
+    # Volumes
+    volumes:
+      - ./datasets:/dataset:rw
+      - ./workspace:/workspace:rw
+      - ./models:/app/models:rw
+      - ./outputs:/app/outputs:rw
+      - ./configs:/app/configs:rw
+      # Mount for development (comment out for production)
+      - .:/app:rw
+
+    # Working directory
+    working_dir: /app
+
+    # Command override for development
+    # command: ["python3", "main.py", "--reload", "--debug"]
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Network
+    networks:
+      - lora-network
+
+  # Optional: TensorBoard service
+  tensorboard:
+    image: tensorflow/tensorflow:latest
+    container_name: lora-tensorboard
+    restart: unless-stopped
+    ports:
+      - "6007:6006"
+    volumes:
+      - ./outputs/logs:/logs:ro
+    command: ["tensorboard", "--logdir=/logs", "--host=0.0.0.0", "--port=6006"]
+    networks:
+      - lora-network
+    profiles:
+      - monitoring
+
+networks:
+  lora-network:
+    driver: bridge
+
+volumes:
+  datasets:
+  workspace:
+  models:
+  outputs:

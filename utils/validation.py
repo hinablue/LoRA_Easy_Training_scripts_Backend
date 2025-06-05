@@ -255,6 +255,8 @@ def validate_optimizer(args: dict) -> None:
             args["optimizer_type"] = "LoraEasyCustomOptimizer.compass.Compass"
         case "lpfadamw":
             args["optimizer_type"] = "LoraEasyCustomOptimizer.lpfadamw.LPFAdamW"
+        case "rmsprop":
+            args["optimizer_type"] = "LoraEasyCustomOptimizer.rmsprop.RMSProp"
         case "automagic_adams":
             args["optimizer_type"] = "LoraEasyCustomOptimizer.automagic_adams.Automagic_AdamS"
         case "automagic_hina_improved":
