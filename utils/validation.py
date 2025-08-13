@@ -261,6 +261,8 @@ def validate_optimizer(args: dict) -> None:
             args["optimizer_type"] = "LoraEasyCustomOptimizer.automagic_adams.Automagic_AdamS"
         case "automagic_hina_improved":
             args["optimizer_type"] = "LoraEasyCustomOptimizer.automagic_cameamp_improved.Automagic_CameAMP_Improved"
+        case "automagic_sinkgd":
+            args["optimizer_type"] = "LoraEasyCustomOptimizer.automagic_sinkgd.Automagic_SinkGD"
 
 def get_tags_from_file(file: str, tags: dict) -> None:
     with open(file, "r", encoding="utf-8") as f:
